@@ -1,29 +1,68 @@
+"use client";
+
 export default function OutreachPage() {
   return (
-    <main className="min-h-screen bg-gray-100 p-6">
-      <h1 className="text-3xl font-bold mb-4">
-        Outreach Draft
-      </h1>
+    <>
+      {/* Page Header */}
+      <section className="mb-6">
+        <h2 className="text-xl font-semibold">
+          Outreach Draft
+        </h2>
+        <p className="text-gray-500 mt-1">
+          Use this as a starting point. You can edit it to sound like you.
+        </p>
+      </section>
 
-      <p className="text-gray-600 mb-4">
-        A draft message you can personalize and send.
-      </p>
+      {/* Guidance Box */}
+      <div className="mb-6 bg-blue-50 border border-blue-100 p-4 rounded-lg text-sm text-blue-900">
+        <p className="font-medium mb-1">
+          Tip for freshers:
+        </p>
+        <p>
+          Keep it short, polite, and specific. You’re not asking for a job —
+          you’re starting a conversation.
+        </p>
+      </div>
 
-      <textarea
-        className="w-full h-40 p-4 rounded border border-gray-300"
-        defaultValue={`Hi,
+      {/* Draft Message */}
+      <div className="bg-white border rounded-lg p-5 shadow-sm">
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Suggested message
+        </label>
 
-I came across the opening for a Junior Data Analyst role and felt my skills in Python and data analysis could be a good match.
+        <textarea
+          className="w-full h-44 p-3 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-200"
+          defaultValue={`Hi [Name],
 
-I would love to connect and learn more about the role.
+I came across the opening for the Junior Data Analyst role and felt that my background in Python and data analysis aligns well with the requirements.
 
-Thank you,
+I would really appreciate the opportunity to connect and learn more about the role and your team.
+
+Thank you for your time,
 [Your Name]`}
-      />
+        />
 
-      <button className="mt-4 px-4 py-2 bg-black text-white rounded">
-        Copy Message
-      </button>
-    </main>
+        <div className="mt-4 flex justify-end">
+          <button
+            type="button"
+            className="px-4 py-2 text-sm font-medium bg-black text-white rounded hover:bg-gray-800"
+            onClick={() => {
+              navigator.clipboard.writeText(
+                `Hi [Name],
+
+I came across the opening for the Junior Data Analyst role and felt that my background in Python and data analysis aligns well with the requirements.
+
+I would really appreciate the opportunity to connect and learn more about the role and your team.
+
+Thank you for your time,
+[Your Name]`
+              );
+            }}
+          >
+            Copy message
+          </button>
+        </div>
+      </div>
+    </>
   );
 }

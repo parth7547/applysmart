@@ -2,7 +2,9 @@ import Link from "next/link";
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-gray-100 p-6">
+    <main className="min-h-screen bg-gray-50 p-6 max-w-3xl mx-auto">
+
+
       
       {/* Navigation */}
       <nav className="mb-6 flex gap-6 text-blue-600 font-medium">
@@ -11,26 +13,35 @@ export default function Home() {
         <Link href="/progress">Progress</Link>
       </nav>
 
-      <h1 className="text-3xl font-bold mb-4">
-        Today’s Focus
-      </h1>
+            <section className="mb-6">
+        <h2 className="text-xl font-semibold text-gray-800">
+          Today’s Focus
+        </h2>
+        <p className="text-gray-500 mt-1">
+          These roles are a good use of your energy today.
+        </p>
+      </section>
 
-      <p className="text-gray-600 mb-6">
-        These jobs are worth your time today.
-      </p>
-
-      <div className="space-y-4">
-        <div className="bg-white p-4 rounded shadow">
-          <h2 className="text-xl font-semibold">
+           <div className="space-y-4">
+        <div className="bg-white p-5 rounded-lg shadow-sm border">
+          <h3 className="text-lg font-semibold text-gray-900">
             Junior Data Analyst
-          </h2>
-          <p className="text-gray-500">
+          </h3>
+          <p className="text-sm text-gray-500">
             Bangalore · Entry Level
           </p>
-          <p className="mt-2 text-sm text-gray-700">
-            Matches your Python and data analysis skills.
-          </p>
+
+          <div className="mt-3 text-sm text-gray-700">
+            <span className="font-medium text-gray-800">
+              Why this is worth your time:
+            </span>
+            <p>
+              Matches your Python and data analysis skills. Requires 0–1 years
+              experience.
+            </p>
+          </div>
         </div>
+
 
         <div className="bg-white p-4 rounded shadow">
           <h2 className="text-xl font-semibold">
@@ -59,3 +70,5 @@ export default function Home() {
     </main>
   );
 }
+
+ 

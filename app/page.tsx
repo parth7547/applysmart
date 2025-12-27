@@ -1,42 +1,67 @@
 "use client";
 
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
-import { redirect } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import Header from "./components/Header";
 
 type Job = {
   title: string;
   company: string;
   location: string;
+  job_type: "remote" | "office" | "hybrid";
   why: string;
   apply_url: string;
 };
 
-export default async function Home() {
-  const session = await getServerSession(authOptions);
-  if (!session) {
-    redirect("/login");
-  }
+export default function Home() {
+  const router = useRouter();
+
+  const [profile, setProfile] = useState<any>(null);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | "remote" | "office">("all");
 
+  /* -------------------------------
+     1. Redirect to onboarding if needed
+  -------------------------------- */
   useEffect(() => {
-    fetch("http://127.0.0.1:8000/jobs/today")
+    const stored = localStorage.getItem("applysmart_profile");
+    if (!stored) {
+      router.push("/onboarding");
+      return;
+    }
+    setProfile(JSON.parse(stored));
+  }, [router]);
+
+  /* -------------------------------
+     2. Fetch jobs using profile
+  -------------------------------- */
+  useEffect(() => {
+    if (!profile) return;
+
+    setLoading(true);
+
+    fetch("http://127.0.0.1:8000/jobs/today", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(profile),
+    })
       .then((res) => res.json())
       .then((data) => {
-        setJobs(data.jobs);
+        setJobs(data.jobs || []);
         setLoading(false);
       })
       .catch(() => setLoading(false));
-  }, []);
+  }, [profile]);
 
+  /* -------------------------------
+     3. Filter jobs
+  -------------------------------- */
   const filteredJobs = jobs.filter((job) => {
-    const loc = job.location.toLowerCase();
-    if (filter === "remote") return loc.includes("remote");
-    if (filter === "office") return !loc.includes("remote");
+    if (filter === "remote") return job.job_type === "remote";
+    if (filter === "office") return job.job_type === "office";
     return true;
   });
 
@@ -44,13 +69,13 @@ export default async function Home() {
     <div className="min-h-screen bg-gray-100">
       <Header />
 
-      {/* TOP CONTROLS — FULL WIDTH */}
+      {/* TOP CONTROLS */}
       <section className="px-6 py-6 border-b bg-white">
         <h2 className="text-2xl font-semibold text-gray-900">
           Today’s Focus
         </h2>
         <p className="text-gray-600 mt-1">
-          High-signal opportunities selected to reduce noise.
+          Opportunities matched to your preferences. Focus on quality.
         </p>
 
         <div className="flex gap-3 mt-4">
@@ -75,7 +100,7 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* MAIN GRID — USES FULL SCREEN */}
+      {/* MAIN CONTENT */}
       <main className="p-6">
         {loading && (
           <div className="grid gap-6 grid-cols-[repeat(auto-fit,minmax(320px,1fr))] auto-rows-fr">
@@ -148,8 +173,8 @@ export default async function Home() {
                   Remote roles are limited for entry-level positions.
                 </p>
                 <p className="text-sm mt-1">
-                  Most fresher and internship roles currently prefer on-site or hybrid
-                  work. We recommend focusing on these high-quality opportunities.
+                  Most fresher and internship roles currently prefer on-site or
+                  hybrid work.
                 </p>
               </>
             ) : (
@@ -158,8 +183,7 @@ export default async function Home() {
           </div>
         )}
 
-
-        {/* BOTTOM CONTEXT / CLOSURE */}
+        {/* FOOTER CLOSURE */}
         <div className="mt-16 pb-12 flex flex-col items-center text-center text-gray-500">
           <div className="w-full max-w-xl border-t pt-6">
             <p className="text-sm">
@@ -174,4 +198,3 @@ export default async function Home() {
     </div>
   );
 }
-

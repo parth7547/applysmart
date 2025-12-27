@@ -7,69 +7,99 @@ load_dotenv()
 SERPAPI_KEY = os.getenv("SERPAPI_KEY")
 
 
+# -----------------------------
+# Job type detection (SAFE)
+# -----------------------------
+def detect_job_type(title, snippet, link):
+    text = f"{title} {snippet} {link}".lower()
+
+    if any(word in text for word in [
+        "remote", "work from home", "wfh", "anywhere",
+        "worldwide", "distributed", "home-based"
+    ]):
+        return "remote"
+
+    if "hybrid" in text:
+        return "hybrid"
+
+    return "office"
+
+
+
+# -----------------------------
+# Build smart search queries
+# -----------------------------
 def build_queries(user_profile):
     role = user_profile["preferred_role"]
 
-    queries = [
-        f"{role} intern apply",
-        f"junior {role} apply",
-        f"{role} fresher 0-1 years apply",
-        f"{role} trainee apply",
-    ]
+    return {
+        "office": [
+            f"{role} intern apply site:careers",
+            f"junior {role} apply site:careers",
+            f"{role} fresher apply site:company",
+        ],
+        "remote": [
+            f"remote {role} intern apply",
+            f"{role} remote job apply",
+            f"{role} work from home apply",
+        ]
+    }
 
-    return queries
-
-
+# -----------------------------
+# Discover real job openings
+# -----------------------------
 def discover_jobs(user_profile, limit=20):
-    """
-    Discover real job openings using search API
-    """
-
-    queries = build_queries(user_profile)
+    query_groups = build_queries(user_profile)
     jobs = []
+    seen_links = set()
 
-    ROLE_KEYWORDS = [
-        "intern", "junior", "associate", "analyst",
-        "trainee", "engineer", "developer", "scientist"
-    ]
+    # total number of queries (office + remote)
+    total_queries = sum(len(q) for q in query_groups.values())
+    results_per_query = max(1, limit // total_queries)
 
-    GENERIC_TITLES = [
-        "careers", "join our team", "current openings",
-        "jobs at", "work with us"
-    ]
+    for job_mode, queries in query_groups.items():
+        for query in queries:
+            params = {
+                "engine": "google",
+                "q": query,
+                "api_key": SERPAPI_KEY,
+                "num": results_per_query,
+                "hl": "en",
+                "gl": "in"
+            }
 
-    results_per_query = max(1, limit // len(queries))
+            response = requests.get("https://serpapi.com/search", params=params)
+            data = response.json()
 
-    for query in queries:
-        params = {
-            "engine": "google",
-            "q": query,
-            "api_key": SERPAPI_KEY,
-            "num": results_per_query
-        }
+            for result in data.get("organic_results", []):
+                title_raw = result.get("title") or ""
+                snippet_raw = result.get("snippet") or ""
+                apply_url = result.get("link") or ""
 
-        response = requests.get("https://serpapi.com/search", params=params)
-        data = response.json()
+                # Skip job aggregators explicitly
+                if any(site in apply_url for site in [
+                    "naukri", "linkedin.com/jobs", "internshala", "indeed"
+                ]):
+                    continue
 
-        for result in data.get("organic_results", []):
-            title = (result.get("title") or "").lower()
-            snippet = (result.get("snippet") or "").lower()
+                if not apply_url or apply_url in seen_links:
+                    continue
 
-            # Skip generic career pages
-            if any(generic in title for generic in GENERIC_TITLES):
-                continue
+                seen_links.add(apply_url)
 
-            # Keep only role-specific pages
-            if not any(keyword in title or keyword in snippet for keyword in ROLE_KEYWORDS):
-                continue
+                job_type = "remote" if job_mode == "remote" else "office"
+                location = "Remote" if job_type == "remote" else "On-site / Hybrid"
 
-            jobs.append({
-                "title": result.get("title"),
-                "company": result.get("source"),
-                "location": "On-site / Hybrid",
-                "description": result.get("snippet", ""),
-                "apply_url": result.get("link"),
-                "why": f"Matches search query: '{query}'"
-            })
+                jobs.append({
+                    "title": title_raw,
+                    "company": result.get("source") or "Unknown",
+                    "location": location,
+                    "job_type": job_type,
+                    "why": f"Discovered via {job_type} job search",
+                    "apply_url": apply_url,
+                })
+
+                if len(jobs) >= limit:
+                    return jobs
 
     return jobs

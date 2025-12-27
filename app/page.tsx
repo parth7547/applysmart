@@ -1,5 +1,8 @@
 "use client";
 
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/auth";
+import { redirect } from "next/navigation";
 import { useEffect, useState } from "react";
 import Header from "./components/Header";
 
@@ -11,7 +14,11 @@ type Job = {
   apply_url: string;
 };
 
-export default function Home() {
+export default async function Home() {
+  const session = await getServerSession(authOptions);
+  if (!session) {
+    redirect("/login");
+  }
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | "remote" | "office">("all");
@@ -134,10 +141,23 @@ export default function Home() {
         )}
 
         {!loading && filteredJobs.length === 0 && (
-          <p className="text-gray-500 mt-10">
-            No jobs match this filter.
-          </p>
+          <div className="mt-10 max-w-xl text-gray-600">
+            {filter === "remote" ? (
+              <>
+                <p className="font-medium">
+                  Remote roles are limited for entry-level positions.
+                </p>
+                <p className="text-sm mt-1">
+                  Most fresher and internship roles currently prefer on-site or hybrid
+                  work. We recommend focusing on these high-quality opportunities.
+                </p>
+              </>
+            ) : (
+              <p>No jobs match this filter right now.</p>
+            )}
+          </div>
         )}
+
 
         {/* BOTTOM CONTEXT / CLOSURE */}
         <div className="mt-16 pb-12 flex flex-col items-center text-center text-gray-500">
@@ -154,3 +174,4 @@ export default function Home() {
     </div>
   );
 }
+

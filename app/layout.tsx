@@ -1,22 +1,24 @@
-"use client";
+import "./globals.css";
+import { ReactNode } from "react";
+import { SessionProvider } from "next-auth/react";
 
-import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+export const metadata = {
+  title: "ApplySmart",
+  description: "Smart job discovery for freshers",
+};
 
-export default function OnboardingPage() {
-  const { data: session, status } = useSession();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/login");
-    }
-  }, [status, router]);
-
-  if (status === "loading") return null;
-
+export default function RootLayout({
+  children,
+}: {
+  children: ReactNode;
+}) {
   return (
-    // your existing onboarding UI
+    <html lang="en">
+      <body>
+        <SessionProvider>
+          {children}
+        </SessionProvider>
+      </body>
+    </html>
   );
 }

@@ -1,14 +1,36 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 
 export default function OnboardingPage() {
   const router = useRouter();
+  const { status } = useSession();
 
   const [role, setRole] = useState("");
   const [location, setLocation] = useState("any");
   const [experience, setExperience] = useState("fresher");
+
+  // 🔒 Protect onboarding: redirect if not logged in
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.replace("/login");
+    }
+  }, [status, router]);
+
+  // ⏳ While session is loading, render nothing
+  if (status === "loading") {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-gray-500">Loading...</p>
+      </div>
+    );
+  }
+
+  if (status !== "authenticated") {
+    return null;
+  }
 
   const handleContinue = () => {
     if (!role.trim()) {
@@ -19,9 +41,9 @@ export default function OnboardingPage() {
     localStorage.setItem(
       "applysmart_profile",
       JSON.stringify({
-        role,
-        location,
-        experience,
+        preferred_role: role,
+        location_preference: location,
+        experience_level: experience,
       })
     );
 

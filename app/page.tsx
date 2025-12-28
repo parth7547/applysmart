@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import Header from "./components/Header";
 
 type Job = {
@@ -13,35 +14,52 @@ type Job = {
   apply_url: string;
 };
 
-export default function Home() {
+export default function HomePage() {
   const router = useRouter();
+  const { status } = useSession();
 
   const [profile, setProfile] = useState<any>(null);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<"all" | "remote" | "office">("all");
+  const [filter, setFilter] =
+    useState<"all" | "remote" | "office">("all");
 
-  // 🔹 Check onboarding profile
+  // 🔐 AUTH GUARD
   useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/login");
+    }
+  }, [status, router]);
+
+  // 🧾 ONBOARDING CHECK (after auth)
+  useEffect(() => {
+    if (status !== "authenticated") return;
+
     const stored = localStorage.getItem("applysmart_profile");
     if (!stored) {
       router.push("/onboarding");
       return;
     }
-    setProfile(JSON.parse(stored));
-  }, [router]);
 
-  // 🔹 Fetch jobs from LIVE backend
+    setProfile(JSON.parse(stored));
+  }, [status, router]);
+
+  // 🌐 FETCH JOBS
   useEffect(() => {
     if (!profile) return;
 
+    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+    if (!baseUrl) {
+      console.error("NEXT_PUBLIC_API_BASE_URL is missing");
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
 
-    fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/jobs/today`, {
+    fetch(`${baseUrl}/jobs/today`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(profile),
     })
       .then((res) => res.json())
@@ -49,10 +67,18 @@ export default function Home() {
         setJobs(data.jobs || []);
         setLoading(false);
       })
-      .catch(() => setLoading(false));
+      .catch((err) => {
+        console.error(err);
+        setLoading(false);
+      });
   }, [profile]);
 
-  // 🔹 Filter logic
+  // ⏳ WAIT STATES
+  if (status === "loading") {
+    return <div className="p-6">Loading session…</div>;
+  }
+
+  // 🔎 FILTER LOGIC
   const filteredJobs = jobs.filter((job) => {
     if (filter === "remote") return job.job_type === "remote";
     if (filter === "office") return job.job_type === "office";

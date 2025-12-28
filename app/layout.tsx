@@ -1,14 +1,22 @@
-import "./globals.css";
-import { ReactNode } from "react";
+"use client";
 
-export default function RootLayout({
-  children,
-}: {
-  children: ReactNode;
-}) {
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+
+export default function OnboardingPage() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/login");
+    }
+  }, [status, router]);
+
+  if (status === "loading") return null;
+
   return (
-    <html lang="en">
-      <body>{children}</body>
-    </html>
+    // your existing onboarding UI
   );
 }

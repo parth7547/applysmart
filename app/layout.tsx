@@ -1,11 +1,6 @@
 import "./globals.css";
 import { ReactNode } from "react";
-import { SessionProvider } from "next-auth/react";
-
-export const metadata = {
-  title: "ApplySmart",
-  description: "Smart job discovery for freshers",
-};
+import Providers from "./providers";
 
 export default function RootLayout({
   children,
@@ -14,10 +9,8 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>
-        <SessionProvider>
-          {children}
-        </SessionProvider>
+      <body className="bg-gray-100">
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

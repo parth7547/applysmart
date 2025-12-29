@@ -45,33 +45,20 @@ export default function HomePage() {
   }, [status, router]);
 
   // 🌐 FETCH JOBS
-  useEffect(() => {
-    if (!profile) return;
+    useEffect(() => {
+      if (!profile) return;
 
-    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
-    if (!baseUrl) {
-      console.error("NEXT_PUBLIC_API_BASE_URL is missing");
-      setLoading(false);
-      return;
-    }
+      setLoading(true);
 
-    setLoading(true);
+      fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/jobs/today`)
+        .then((res) => res.json())
+        .then((data) => {
+          setJobs(data.jobs || []);
+          setLoading(false);
+        })
+        .catch(() => setLoading(false));
+    }, [profile]);
 
-    fetch(`${baseUrl}/jobs/today`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(profile),
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        setJobs(data.jobs || []);
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error(err);
-        setLoading(false);
-      });
-  }, [profile]);
 
   // ⏳ WAIT STATES
   if (status === "loading") {

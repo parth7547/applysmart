@@ -77,6 +77,28 @@ def get_todays_jobs():
 
     return {"jobs": top_jobs}
 
+@app.post("/jobs/recommended")
+def get_recommended_jobs(profile: UserProfile):
+    user_profile = {
+        "preferred_role": profile.preferred_role,
+        "location": profile.location_preference,
+        "experience": profile.experience_level,
+        "skills": [],
+    }
+
+    in_office_jobs = discover_jobs(user_profile, limit=20)
+    remote_jobs = fetch_remote_jobs(user_profile, limit=20)
+
+    all_jobs = in_office_jobs + remote_jobs
+
+    top_jobs = select_top_jobs(
+        all_jobs,
+        user_profile["skills"],
+        top_n=5
+    )
+
+    return {"jobs": top_jobs}
+
 
 
 @app.get("/auth/me")

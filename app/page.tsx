@@ -22,42 +22,40 @@ export default function HomePage() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] =
-    useState<"all" | "remote" | "office">("all");
+  useState<"best" | "remote" | "office">("best");
 
-  // 🔐 AUTH GUARD
-  useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/login");
-    }
-  }, [status, router]);
+
 
   // 🧾 ONBOARDING CHECK (after auth)
-  useEffect(() => {
-    if (status !== "authenticated") return;
-
-    const stored = localStorage.getItem("applysmart_profile");
-    if (!stored) {
-      router.push("/onboarding");
-      return;
-    }
-
-    setProfile(JSON.parse(stored));
-  }, [status, router]);
+    useEffect(() => {
+      if (status === "authenticated") {
+        const stored = localStorage.getItem("applysmart_profile");
+        if (stored) {
+          setProfile(JSON.parse(stored));
+        } else {
+          setProfile({}); // TEMP: allow jobs without profile
+        }
+      }
+    }, [status]);
 
   // 🌐 FETCH JOBS
-    useEffect(() => {
-      if (!profile) return;
+    // 🌐 FETCH JOBS (TEMP: no profile dependency)
+      useEffect(() => {
+        setLoading(true);
 
-      setLoading(true);
+        fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/jobs/today`)
+          .then((res) => res.ok ? res.json() : { jobs: [] })
+          .then((data) => {
+            setJobs(Array.isArray(data.jobs) ? data.jobs : []);
+            setLoading(false);
+          })
+          .catch(() => {
+            setJobs([]);
+            setLoading(false);
+          });
+      }, []);
 
-      fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/jobs/today`)
-        .then((res) => res.json())
-        .then((data) => {
-          setJobs(data.jobs || []);
-          setLoading(false);
-        })
-        .catch(() => setLoading(false));
-    }, [profile]);
+
 
 
   // ⏳ WAIT STATES
@@ -67,10 +65,11 @@ export default function HomePage() {
 
   // 🔎 FILTER LOGIC
   const filteredJobs = jobs.filter((job) => {
-    if (filter === "remote") return job.job_type === "remote";
-    if (filter === "office") return job.job_type === "office";
-    return true;
+  if (filter === "remote") return job.job_type === "remote";
+  if (filter === "office") return job.job_type === "office";
+  return true;
   });
+
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -86,7 +85,7 @@ export default function HomePage() {
         </p>
 
         <div className="flex gap-3 mt-4">
-          {["all", "remote", "office"].map((f) => (
+          {["best", "remote", "office"].map((f) => (
             <button
               key={f}
               onClick={() => setFilter(f as any)}

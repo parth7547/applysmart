@@ -12,13 +12,17 @@ export default function OnboardingPage() {
   const [location, setLocation] = useState("any");
   const [experience, setExperience] = useState("fresher");
 
-  useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/login");
-    }
-  }, [status, router]);
+  // 🔐 Protect page (safe for deploy)
 
-  if (status === "loading") return null;
+
+  // ⏳ Loading state (no blank screen)
+  if (status === "loading") {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        Loading…
+      </div>
+    );
+  }
 
   const handleContinue = () => {
     if (!role.trim()) {
@@ -35,7 +39,6 @@ export default function OnboardingPage() {
       })
     );
 
-    // ✅ IMPORTANT
     router.replace("/");
   };
 

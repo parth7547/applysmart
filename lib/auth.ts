@@ -12,4 +12,18 @@ export const authOptions: NextAuthOptions = {
     strategy: "jwt",
   },
   secret: process.env.NEXTAUTH_SECRET,
+
+  callbacks: {
+    async jwt({ token, account }) {
+      if (account) {
+        token.accessToken = account.access_token;
+      }
+      return token;
+    },
+
+    async session({ session, token }) {
+      session.user.accessToken = token.accessToken as string;
+      return session;
+    },
+  },
 };

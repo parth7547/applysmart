@@ -7,6 +7,9 @@ from agent.search_discovery import discover_jobs
 from agent.remote_fetcher import fetch_remote_jobs
 from agent.job_selector import select_top_jobs
 
+from fastapi import Depends
+from agent.auth import get_current_user   # adjust import if needed
+
 
 # ---------------- CONFIG ----------------
 CACHE = {
@@ -42,19 +45,20 @@ def root():
     return {"status": "ApplySmart backend running"}
 
 
-@app.post("/jobs/today")
-def get_todays_jobs(profile: UserProfile):
+@app.get("/jobs/today")
+def get_todays_jobs():
     current_time = time.time()
 
-    # Cache hit
+    # Cache
     if CACHE["data"] and current_time - CACHE["timestamp"] < CACHE_TTL:
         return {"jobs": CACHE["data"]}
 
+    # Safe default profile (deploy-safe)
     user_profile = {
-        "preferred_role": profile.preferred_role,
-        "location": profile.location_preference,
-        "experience": profile.experience_level,
-        "skills": ["Python", "Data", "ML"],  # default for now
+        "preferred_role": "Any",
+        "location": "Any",
+        "experience": "Any",
+        "skills": [],
     }
 
     in_office_jobs = discover_jobs(user_profile, limit=20)
@@ -72,3 +76,12 @@ def get_todays_jobs(profile: UserProfile):
     CACHE["timestamp"] = current_time
 
     return {"jobs": top_jobs}
+
+
+
+@app.get("/auth/me")
+def auth_me(user = Depends(get_current_user)):
+    return {
+        "id": user["id"],
+        "email": user["email"]
+    }

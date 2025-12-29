@@ -28,10 +28,15 @@ export default function OnboardingPage() {
 
     localStorage.setItem(
       "applysmart_profile",
-      JSON.stringify({ role, location, experience })
+      JSON.stringify({
+        preferred_role: role,
+        location_preference: location,
+        experience_level: experience,
+      })
     );
 
-    router.push("/");
+    // ✅ IMPORTANT
+    router.replace("/");
   };
 
   return (
